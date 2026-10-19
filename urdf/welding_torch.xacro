@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="welding_torch" params="prefix parent *origin">
+    
+    <!-- Joint connecting parent link (e.g. tool0) to torch mounting plate -->
+    <joint name="${prefix}torch_mount_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${prefix}welding_torch_link" />
+    </joint>
+
+    <!-- Main welding torch body link -->
+    <link name="${prefix}welding_torch_link">
+      <inertial>
+        <mass value="1.8" />
+        <origin xyz="0.02 0.0 0.09" rpy="0 0 0" />
+        <inertia ixx="0.006" ixy="0.0" ixz="0.001" iyy="0.007" iyz="0.0" izz="0.003" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/visual/welding_torch.stl" />
+        </geometry>
+        <material name="torch_body_color">
+          <color rgba="0.22 0.24 0.26 1.0" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/collision/welding_torch.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Gas Cup / Nozzle visual link for distinct metallic brass/copper color -->
+    <link name="${prefix}torch_nozzle">
+      <visual>
+        <origin xyz="0.0525 0.0 0.195" rpy="0 0.4345 0" />
+        <geometry>
+          <cylinder length="0.055" radius="0.011" />
+        </geometry>
+        <material name="copper_nozzle_color">
+          <color rgba="0.85 0.55 0.28 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <joint name="${prefix}torch_nozzle_joint" type="fixed">
+      <parent link="${prefix}welding_torch_link" />
+      <child link="${prefix}torch_nozzle" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Welding wire tip (electrode) visual -->
+    <link name="${prefix}torch_wire_tip">
+      <visual>
+        <origin xyz="0.0625 0.0 0.230" rpy="0 0.4345 0" />
+        <geometry>
+          <cylinder length="0.018" radius="0.0012" />
+        </geometry>
+        <material name="copper_wire_color">
+          <color rgba="0.95 0.65 0.35 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <joint name="${prefix}torch_wire_joint" type="fixed">
+      <parent link="${prefix}welding_torch_link" />
+      <child link="${prefix}torch_wire_tip" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Tool Center Point (TCP) Link at the exact tip of the welding wire -->
+    <link name="${prefix}welding_torch_tcp" />
+    <joint name="${prefix}welding_tcp_joint" type="fixed">
+      <parent link="${prefix}welding_torch_link" />
+      <child link="${prefix}welding_torch_tcp" />
+      <!-- Wire tip position: x=0.065, y=0.0, z=0.240. 
+           Orientation: angled 24.9 deg (0.4345 rad) along torch swan-neck -->
+      <origin xyz="0.065 0.0 0.240" rpy="0 0.4345 0" />
+    </joint>
+
+  </xacro:macro>
+
+</robot>
+

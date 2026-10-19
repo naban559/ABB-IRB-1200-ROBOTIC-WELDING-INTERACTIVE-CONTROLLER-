@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="welding_table" params="prefix parent *origin">
+    
+    <joint name="${prefix}table_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${prefix}welding_table_link" />
+    </joint>
+
+    <link name="${prefix}welding_table_link">
+      <inertial>
+        <mass value="110.0" />
+        <origin xyz="0 0 -0.15" rpy="0 0 0" />
+        <inertia ixx="14.0" ixy="0.0" ixz="0.0" iyy="9.5" iyz="0.0" izz="18.0" />
+      </inertial>
+      <!-- Industrial Precision Welding Table Visual -->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/visual/welding_table.stl" />
+        </geometry>
+        <material name="industrial_steel_grey">
+          <color rgba="0.32 0.35 0.38 1.0" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/collision/welding_table.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Table top surface reference frame (z=0.02 is top surface of table plate) -->
+    <link name="${prefix}table_top_surface" />
+    <joint name="${prefix}table_surface_joint" type="fixed">
+      <parent link="${prefix}welding_table_link" />
+      <child link="${prefix}table_top_surface" />
+      <origin xyz="0.0 0.0 0.02" rpy="0 0 0" />
+    </joint>
+
+  </xacro:macro>
+
+</robot>

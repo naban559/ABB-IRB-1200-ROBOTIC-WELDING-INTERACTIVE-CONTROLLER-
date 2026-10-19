@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="workpiece" params="prefix parent *origin">
+    
+    <joint name="${prefix}workpiece_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${prefix}workpiece_link" />
+    </joint>
+
+    <!-- Main Workpiece Base Assembly Link -->
+    <link name="${prefix}workpiece_link">
+      <inertial>
+        <mass value="14.2" />
+        <origin xyz="0 0 0.02" rpy="0 0 0" />
+        <inertia ixx="0.18" ixy="0.0" ixz="0.0" iyy="0.14" iyz="0.0" izz="0.25" />
+      </inertial>
+      <!-- Base Plate Visual -->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/visual/workpiece_plates.stl" />
+        </geometry>
+        <material name="workpiece_structural_steel">
+          <color rgba="0.68 0.72 0.76 1.0" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://abb_welding_standalone/meshes/collision/workpiece_plates.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Visual Physical Weld Seam Groove (Straight Fillet Seam along Y at X=0.0, Z=0.0165) -->
+    <link name="${prefix}weld_seam_visual_straight">
+      <visual>
+        <origin xyz="0.001 0.0 0.0165" rpy="0 0 0" />
+        <geometry>
+          <box size="0.004 0.184 0.002" />
+        </geometry>
+        <material name="machined_groove_color">
+          <color rgba="0.22 0.25 0.28 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <joint name="${prefix}seam_visual_straight_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}weld_seam_visual_straight" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Visual Physical Weld Seam Groove (Transverse L-Seam along X at Y=-0.06, Z=0.0165) -->
+    <link name="${prefix}weld_seam_visual_transverse">
+      <visual>
+        <origin xyz="-0.035 -0.06 0.0165" rpy="0 0 0" />
+        <geometry>
+          <box size="0.07 0.004 0.002" />
+        </geometry>
+        <material name="machined_groove_color" />
+      </visual>
+    </link>
+
+    <joint name="${prefix}seam_visual_transverse_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}weld_seam_visual_transverse" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Precise Physical Reference Frames for Seam Tracking & Path Calculation -->
+    <!-- Straight Seam Start Frame (Y = -0.09) -->
+    <link name="${prefix}seam_straight_start" />
+    <joint name="${prefix}seam_straight_start_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}seam_straight_start" />
+      <origin xyz="0.0 -0.09 0.016" rpy="0 0 0" />
+    </joint>
+
+    <!-- Straight Seam End Frame (Y = +0.09) -->
+    <link name="${prefix}seam_straight_end" />
+    <joint name="${prefix}seam_straight_end_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}seam_straight_end" />
+      <origin xyz="0.0 0.09 0.016" rpy="0 0 0" />
+    </joint>
+
+    <!-- L-Seam Corner Frame -->
+    <link name="${prefix}seam_corner" />
+    <joint name="${prefix}seam_corner_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}seam_corner" />
+      <origin xyz="0.0 -0.06 0.016" rpy="0 0 0" />
+    </joint>
+
+    <!-- L-Seam Transverse Start Frame -->
+    <link name="${prefix}seam_l_start" />
+    <joint name="${prefix}seam_l_start_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}seam_l_start" />
+      <origin xyz="-0.07 -0.06 0.016" rpy="0 0 0" />
+    </joint>
+
+    <!-- Workpiece Origin Reference Frame for legacy compatibility -->
+    <link name="${prefix}weld_seam_origin" />
+    <joint name="${prefix}weld_seam_origin_joint" type="fixed">
+      <parent link="${prefix}workpiece_link" />
+      <child link="${prefix}weld_seam_origin" />
+      <origin xyz="0.0 0.0 0.016" rpy="0 0 0" />
+    </joint>
+
+  </xacro:macro>
+
+</robot>

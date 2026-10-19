@@ -1,0 +1,7 @@
+ABB IRB 1200 Robotic Welding Interactive Controller
+Copyright (c) 2024-2026
+
+This product includes software and kinematics/mesh models developed by:
+- ABB Robotics (ABB IRB 1200 industrial manipulator models)
+- ROS-Industrial Consortium (https://github.com/ros-industrial/abb_ros2)
+- Open Source Robotics Foundation (ROS 2 Humble, Gazebo Sim, MoveIt 2)

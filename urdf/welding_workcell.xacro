@@ -1,0 +1,289 @@
+<?xml version="1.0"?>
+<robot name="abb_irb1200_welding_workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Arguments -->
+  <xacro:arg name="use_fake_hardware" default="true" />
+  <xacro:arg name="use_gazebo" default="false" />
+  <xacro:arg name="controllers_file" default="$(find abb_welding_standalone)/config/ros2_controllers.yaml" />
+  <xacro:arg name="rws_ip" default="None" />
+  <xacro:arg name="rws_port" default="80" />
+  <xacro:arg name="configure_via_rws" default="true" />
+  <xacro:arg name="prefix" default="" />
+  <xacro:arg name="workpiece_x" default="0.0" />
+  <xacro:arg name="workpiece_y" default="0.0" />
+  <xacro:arg name="workpiece_yaw" default="0.0" />
+
+  <!-- Include ABB IRB 1200-5/0.90 Robot Macros -->
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/irb1200_5_90_macro.xacro" />
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/irb1200.ros2_control.xacro" />
+
+  <!-- Include Workcell Tools and Equipment -->
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/welding_torch.xacro" />
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/welding_table.xacro" />
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/workpiece.xacro" />
+  <xacro:include filename="$(find abb_welding_standalone)/urdf/welding_camera.xacro" />
+
+  <!-- World coordinate frame -->
+  <link name="world" />
+
+  <!-- Workshop Floor / Safety Platform -->
+  <link name="workshop_floor">
+    <inertial>
+      <mass value="500.0" />
+      <origin xyz="0.4 0.0 -0.01" rpy="0 0 0" />
+      <inertia ixx="100.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="200.0" />
+    </inertial>
+    <visual>
+      <origin xyz="0.4 0.0 -0.01" rpy="0 0 0" />
+      <geometry>
+        <box size="2.5 2.5 0.02" />
+      </geometry>
+      <material name="floor_dark_grey">
+        <color rgba="0.18 0.20 0.22 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.4 0.0 -0.01" rpy="0 0 0" />
+      <geometry>
+        <box size="2.5 2.5 0.02" />
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="workshop_floor">
+    <material>
+      <ambient>0.18 0.20 0.22 1.0</ambient>
+      <diffuse>0.22 0.24 0.26 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </gazebo>
+
+  <joint name="world_to_floor" type="fixed">
+    <parent link="world" />
+    <child link="workshop_floor" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- Robot Heavy-duty Mounting Pedestal -->
+  <link name="robot_pedestal">
+    <inertial>
+      <mass value="80.0" />
+      <origin xyz="0 0 0.175" rpy="0 0 0" />
+      <inertia ixx="1.5" ixy="0.0" ixz="0.0" iyy="1.5" iyz="0.0" izz="1.0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.175" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.35" radius="0.16" />
+      </geometry>
+      <material name="pedestal_yellow">
+        <color rgba="0.95 0.68 0.08 1.0" />
+      </material>
+    </visual>
+    <!-- Base mounting flange plate -->
+    <visual>
+      <origin xyz="0 0 0.01" rpy="0 0 0" />
+      <geometry>
+        <box size="0.45 0.45 0.02" />
+      </geometry>
+      <material name="pedestal_black">
+        <color rgba="0.15 0.15 0.15 1.0" />
+      </material>
+    </visual>
+    <!-- Top mounting plate -->
+    <visual>
+      <origin xyz="0 0 0.35" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.02" radius="0.20" />
+      </geometry>
+      <material name="pedestal_black" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.175" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.35" radius="0.18" />
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="robot_pedestal">
+    <material>
+      <ambient>0.95 0.68 0.08 1.0</ambient>
+      <diffuse>0.95 0.68 0.08 1.0</diffuse>
+      <specular>0.3 0.3 0.3 1.0</specular>
+    </material>
+  </gazebo>
+
+  <joint name="world_to_pedestal" type="fixed">
+    <parent link="world" />
+    <child link="robot_pedestal" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- Instantiate ABB IRB 1200 Robot -->
+  <xacro:abb_irb1200_5_90 prefix="$(arg prefix)" />
+
+  <!-- Mount Robot base to Pedestal at height z=0.36m -->
+  <joint name="pedestal_to_robot" type="fixed">
+    <parent link="robot_pedestal" />
+    <child link="$(arg prefix)base_link" />
+    <origin xyz="0 0 0.36" rpy="0 0 0" />
+  </joint>
+
+  <!-- Instantiate Industrial Welding Torch on robot tool0 -->
+  <xacro:welding_torch prefix="$(arg prefix)" parent="$(arg prefix)tool0">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:welding_torch>
+
+  <!-- Instantiate Industrial Welding Table -->
+  <!-- Table placed in front of robot: x=0.60m, y=0.0m, table top surface at z=0.50m -->
+  <xacro:welding_table prefix="$(arg prefix)" parent="world">
+    <origin xyz="0.60 0.0 0.48" rpy="0 0 0" />
+  </xacro:welding_table>
+
+  <!-- Instantiate Workpiece Metal Plates on table top surface -->
+  <xacro:workpiece prefix="$(arg prefix)" parent="$(arg prefix)table_top_surface">
+    <origin xyz="$(arg workpiece_x) $(arg workpiece_y) 0.0" rpy="0 0 $(arg workpiece_yaw)" />
+  </xacro:workpiece>
+
+  <!-- Instantiate Overhead Industrial RGB-D Camera overlooking table -->
+  <xacro:welding_camera prefix="$(arg prefix)" parent="world">
+    <origin xyz="0.60 0.0 1.40" rpy="0 0 0" />
+  </xacro:welding_camera>
+
+  <!-- Gazebo Material References for Workcell Components -->
+  <gazebo reference="$(arg prefix)welding_torch_link">
+    <material>
+      <ambient>0.22 0.24 0.26 1.0</ambient>
+      <diffuse>0.25 0.28 0.30 1.0</diffuse>
+      <specular>0.4 0.4 0.4 1.0</specular>
+    </material>
+  </gazebo>
+  <gazebo reference="$(arg prefix)torch_nozzle">
+    <material>
+      <ambient>0.85 0.55 0.28 1.0</ambient>
+      <diffuse>0.90 0.60 0.30 1.0</diffuse>
+      <specular>0.6 0.5 0.3 1.0</specular>
+    </material>
+  </gazebo>
+  <gazebo reference="$(arg prefix)welding_table_link">
+    <material>
+      <ambient>0.32 0.35 0.38 1.0</ambient>
+      <diffuse>0.35 0.38 0.42 1.0</diffuse>
+      <specular>0.2 0.2 0.2 1.0</specular>
+    </material>
+  </gazebo>
+  <gazebo reference="$(arg prefix)workpiece_link">
+    <material>
+      <ambient>0.68 0.72 0.76 1.0</ambient>
+      <diffuse>0.72 0.76 0.80 1.0</diffuse>
+      <specular>0.4 0.4 0.4 1.0</specular>
+    </material>
+  </gazebo>
+  <gazebo reference="$(arg prefix)weld_seam_visual_straight">
+    <material>
+      <ambient>0.15 0.18 0.20 1.0</ambient>
+      <diffuse>0.15 0.18 0.20 1.0</diffuse>
+      <specular>0.05 0.05 0.05 1.0</specular>
+    </material>
+  </gazebo>
+  <gazebo reference="$(arg prefix)weld_seam_visual_transverse">
+    <material>
+      <ambient>0.15 0.18 0.20 1.0</ambient>
+      <diffuse>0.15 0.18 0.20 1.0</diffuse>
+      <specular>0.05 0.05 0.05 1.0</specular>
+    </material>
+  </gazebo>
+
+  <!-- ros2_control hardware interface for ABB IRB 1200 -->
+  <xacro:if value="$(arg use_gazebo)">
+    <ros2_control name="IgnitionSystem" type="system">
+      <hardware>
+        <plugin>ign_ros2_control/IgnitionSystem</plugin>
+      </hardware>
+      <joint name="$(arg prefix)joint_1">
+        <command_interface name="position">
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="$(arg prefix)joint_2">
+        <command_interface name="position">
+          <param name="min">-2.41</param>
+          <param name="max">2.41</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="$(arg prefix)joint_3">
+        <command_interface name="position">
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="$(arg prefix)joint_4">
+        <command_interface name="position">
+          <param name="min">-2.66</param>
+          <param name="max">2.66</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="$(arg prefix)joint_5">
+        <command_interface name="position">
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="$(arg prefix)joint_6">
+        <command_interface name="position">
+          <param name="min">-2.23</param>
+          <param name="max">2.23</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+    </ros2_control>
+
+    <gazebo>
+      <plugin filename="ign_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(arg controllers_file)</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+  <xacro:unless value="$(arg use_gazebo)">
+    <xacro:abb_ros2_control
+      name="ABBMultiInterfaceHardware"
+      prefix="$(arg prefix)"
+      use_fake_hardware="$(arg use_fake_hardware)"
+      rws_ip="$(arg rws_ip)"
+      rws_port="$(arg rws_port)"
+      configure_via_rws="$(arg configure_via_rws)" />
+  </xacro:unless>
+
+</robot>
+

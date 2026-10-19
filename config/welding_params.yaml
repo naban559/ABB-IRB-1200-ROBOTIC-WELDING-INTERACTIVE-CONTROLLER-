@@ -1,0 +1,37 @@
+welding_controller:
+  ros__parameters:
+    planning_group: "welding_arm"
+    tcp_frame: "welding_torch_tcp"
+    base_frame: "world"
+    
+    # Process Speeds (m/s)
+    rapid_velocity_scaling: 0.35      # 35% of max robot speed for approach/retract/home
+    welding_speed_mps: 0.015          # 15 mm/s realistic robotic GMAW weld travel speed
+    cartesian_step_size: 0.005        # 5 mm interpolation resolution
+    cartesian_jump_threshold: 0.0     # Reject kinematics jumps
+    
+    # Height parameters (relative to world frame)
+    # Workpiece surface is at z = 0.515m
+    standoff_clearance: 0.003         # 3 mm arc standoff distance above seam
+    approach_height: 0.080            # 80 mm above seam before touching down
+    retract_height: 0.090             # 90 mm lift after arc extinction
+    
+    # Push/Drag angle in radians (10 - 15 degrees tilt in travel direction)
+    torch_lead_angle_deg: 12.0
+    
+    # Default Pattern: straight | l_shaped | multi_waypoint
+    default_pattern: "straight"
+    auto_start_cycle: true
+    cycle_delay_sec: 4.0
+
+welding_visualizer:
+  ros__parameters:
+    publish_rate: 30.0               # 30 Hz visual update
+    spark_count_per_frame: 18        # Realistic dynamic sparks
+    spark_max_distance: 0.25         # Dispersion radius in meters
+    spark_lifetime_sec: 0.35         # Spark duration
+    bead_step_size: 0.004            # 4 mm weld bead segment spacing
+    bead_width: 0.009                # 9 mm bead width
+    bead_height: 0.004               # 4 mm bead reinforcement height
+    cooling_duration_sec: 5.0        # Time for glowing weld to cool down
+

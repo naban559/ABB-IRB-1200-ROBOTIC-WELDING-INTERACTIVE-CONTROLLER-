@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="welding_camera" params="prefix parent *origin">
+
+    <!-- Overhead camera mount / support truss (positioned above the camera) -->
+    <link name="${prefix}overhead_camera_mount">
+      <inertial>
+        <mass value="5.0" />
+        <origin xyz="0 0 0.08" rpy="0 0 0" />
+        <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.05" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0.08" rpy="0 0 0" />
+        <geometry>
+          <box size="0.08 0.40 0.04" />
+        </geometry>
+        <material name="camera_gantry_grey">
+          <color rgba="0.25 0.28 0.30 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <joint name="${prefix}camera_mount_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${prefix}overhead_camera_mount" />
+    </joint>
+
+    <!-- Industrial RGB-D Camera Body Link -->
+    <!-- Lens/sensor origin is at (0, 0, 0), casing is behind (-X) so it never occludes the lens -->
+    <link name="${prefix}overhead_camera_link">
+      <inertial>
+        <mass value="0.8" />
+        <origin xyz="-0.03 0 0" rpy="0 0 0" />
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+      </inertial>
+      <!-- Camera casing visual positioned behind optical axis -->
+      <visual>
+        <origin xyz="-0.03 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.06 0.14 0.04" />
+        </geometry>
+        <material name="camera_blue">
+          <color rgba="0.12 0.38 0.72 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <!-- Camera positioned at mount origin, aimed straight down at table (pitch = pi/2) -->
+    <joint name="${prefix}camera_body_joint" type="fixed">
+      <parent link="${prefix}overhead_camera_mount" />
+      <child link="${prefix}overhead_camera_link" />
+      <origin xyz="0 0 0" rpy="0 1.5707963 0" />
+    </joint>
+
+    <!-- Camera Optical Frame (ROS standard: Z forward into scene, X right, Y down) -->
+    <link name="${prefix}overhead_camera_optical_frame" />
+    <joint name="${prefix}camera_optical_joint" type="fixed">
+      <parent link="${prefix}overhead_camera_link" />
+      <child link="${prefix}overhead_camera_optical_frame" />
+      <origin xyz="0 0 0" rpy="-1.5707963 0 -1.5707963" />
+    </joint>
+
+    <!-- Gazebo RGB-D Sensor Plugin -->
+    <gazebo reference="${prefix}overhead_camera_link">
+      <material>
+        <ambient>0.12 0.38 0.72 1.0</ambient>
+        <diffuse>0.15 0.42 0.78 1.0</diffuse>
+        <specular>0.5 0.5 0.5 1.0</specular>
+      </material>
+      <sensor name="overhead_camera" type="rgbd_camera">
+        <camera>
+          <horizontal_fov>1.047198</horizontal_fov> <!-- 60 deg -->
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>5.0</far>
+          </clip>
+          <depth_camera>
+            <clip>
+              <near>0.05</near>
+              <far>5.0</far>
+            </clip>
+          </depth_camera>
+          <optical_frame_id>${prefix}overhead_camera_optical_frame</optical_frame_id>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>15</update_rate>
+        <visualize>true</visualize>
+        <topic>overhead_camera</topic>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
+
